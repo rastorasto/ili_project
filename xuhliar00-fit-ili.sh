@@ -1,5 +1,7 @@
 # Author xuhliar00
 
+yum install -y httpd createrepo
+
 echo "1. Creating 200MB file /var/tmp/ukol.img"
 dd if=/dev/zero of=/var/tmp/ukol.img bs=200M count=1
 
@@ -22,24 +24,17 @@ if [ "$#" -eq 0 ]; then
     echo "No arguments were provided"
 else
     echo "Downloading packages to /var/www/html/ukol"
-    yum install -y yum-plugin-downloadonly
     yum install -y --downloadonly --downloaddir=/var/www/html/ukol "$@"
 fi
 
 echo "7. Generating repodata for packages in /var/www/html/uhol"
 echo "Downlaoding and installing createrepo package"
-dnf install -y createrepo
 createrepo /var/www/html/ukol
 
 echo "Setting selinux context for /var/www/html/ukol"
 restorecon -Rv /var/www/html/ukol
 
 echo "8. Configuring /etc/yum.repos/ukol.repo"
-#echo "[ukol]
-#name = Repo Ukol
-#baseurl = http://localhost/ukol
-#enabled = 1
-#gpgcheck = 0" >> /etc/yum.repos.d/ukol.repo
 cat << EOF > /etc/yum.repos.d/ukol.repo
 [ukol]
 name=Repo Ukol
@@ -48,10 +43,7 @@ enabled=1
 gpgcheck=0
 EOF
 
-
-
 echo "9. Installing and setting up apache"
-yum --disablerepo=ukol install -y httpd
 systemctl start httpd
 
 echo "10. Listing available yum repositories"
@@ -66,7 +58,7 @@ mount | grep /var/www/html/ukol
 
 echo "13. Displaying package info for ukol"
 yum clean all
-yum --disablerepo="*" --enablerepo="ukol" list available
+yum --disablerepo="*" --enablerepo="ukol" list --available
 
 echo "Script finished"
 
